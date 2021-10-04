@@ -1,0 +1,149 @@
+-- ###### Base grammer ###### --
+
+-- Similar to the provided grammer
+--
+-- Changes:
+-- * Names
+-- * Removed seperate block rule
+-- * Exp coercions have been moved around a bit to make place for extensions. 
+
+-- Program --
+entrypoints Program ;
+PDefs.      Program ::= [Def] ;
+
+-- Defintions --
+DFun.	  Def ::= Type Ident "(" [Arg] ")" "{" [Stm] "}" ;
+separator nonempty Def "" ;
+
+-- Arguments --
+ADecl.    Arg ::= Type Ident ;
+separator Arg "," ;
+
+-- Statements --
+separator  Stm "" ;
+SEmpty.    Stm ::= ";" ;
+SBlock.    Stm ::= "{" [Stm] "}" ;
+SDecl.     Stm ::= Type [Dec] ";" ;
+SAss.      Stm ::= Exp "=" Exp  ";" ;
+SIncr.     Stm ::= Exp "++"  ";" ;
+SDecr.     Stm ::= Exp "--"  ";" ;
+SRet.      Stm ::= "return" Exp ";" ;
+SVRet.     Stm ::= "return" ";" ;
+SCond.     Stm ::= "if" "(" Exp ")" Stm  ;
+SCondElse. Stm ::= "if" "(" Exp ")" Stm "else" Stm  ;
+SWhile.    Stm ::= "while" "(" Exp ")" Stm ;
+SExp.      Stm ::= Exp  ";" ;
+
+-- Declarators --
+DecNoInit. Dec ::= Ident ;
+DecInit.   Dec ::= Ident "=" Exp ;
+separator  nonempty Dec "," ;
+
+-- Types --
+TInt.     Type ::= "int" ;
+TDouble.  Type ::= "double" ;
+TBool.    Type ::= "boolean" ;
+TVoid.    Type ::= "void" ;
+internal  TStr. Type ::= "string" ;
+internal  TFun. Type ::= Type "(" [Type] ")" ;
+separator Type "," ;
+
+-- Expressions --
+EVar.       Exp7 ::= Ident ;
+EApp.       Exp7 ::= Ident "(" [Exp] ")" ;
+EInt.       Exp7 ::= Integer ;
+EDouble.    Exp7 ::= Double ;
+ELitTrue.   Exp7 ::= "true" ;
+ELitFalse.  Exp7 ::= "false" ;
+EString.    Exp7 ::= String ;
+ENeg.       Exp5 ::= "-" Exp6 ;
+ENot.       Exp5 ::= "!" Exp6 ;
+EMul.       Exp4 ::= Exp4 MulOp Exp5 ;
+EAdd.       Exp3 ::= Exp3 AddOp Exp4 ;
+ERel.       Exp2 ::= Exp2 RelOp Exp3 ;
+EAnd.       Exp1 ::= Exp2 "&&" Exp1 ;
+EOr.        Exp ::= Exp1 "||" Exp ;
+internal    ETyped. Exp ::= "[" Exp ":" Type ":" Char "]" ;
+coercions   Exp 7 ;
+separator   Exp "," ;
+
+-- Operators --
+OPlus.  AddOp ::= "+" ;
+OMinus. AddOp ::= "-" ;
+
+OTimes. MulOp ::= "*" ;
+ODiv.   MulOp ::= "/" ;
+OMod.   MulOp ::= "%" ;
+
+OLt. RelOp ::= "<" ;
+OLe. RelOp ::= "<=" ;
+OGt. RelOp ::= ">" ;
+OGe. RelOp ::= ">=" ;
+OEq. RelOp ::= "==" ;
+ONe. RelOp ::= "!=" ;
+
+-- Comments --
+comment "#" ;
+comment "//" ;
+comment "/*" "*/" ;
+
+
+-- ###### Array extension ###### --
+
+-- Statements --
+SForEach. Stm ::= "for" "(" Type Ident ":" Exp ")" Stm ;
+
+-- Types --
+TArray. Type ::= Type "[]" ;
+
+-- Expressions --
+EIndex.       Exp7 ::= Exp7 "[" Exp "]" ;
+EAllocate.    Exp6 ::= "new" Type [Length] ;
+EDot.         Exp6 ::= Exp6 "." Exp7 ;
+
+-- Lengths --
+LLength.    Length ::= "[" Exp "]" ;
+separator   Length "" ;
+
+
+-- ###### Pointers extension ###### --
+-- (and the inline pointer thing from adv_structs)
+
+-- Types --
+TIdent.     Type ::= Ident ;
+internal    TPointer. Type ::= Ident "*" ;
+internal    TStruct. Type ::= "struct" Ident ;
+
+-- Definitions --
+DPointer.	  Def ::= "typedef" "struct" Ident "*" Ident ";" ;
+DStruct.      Def ::= Struct ";" ;
+DInlinePointer. Def ::= "typedef" Struct "*" Ident ";" ;
+
+-- Structs --
+SStruct.      Struct ::=  "struct" Ident "{" [Field] "}";
+
+-- Fields --
+FField.       Field ::= Type Ident ";" ;
+separator Field "" ;
+
+-- Expressions --
+ENull.    Exp7 ::= "(" Type ")null" ;
+EDeref.   Exp6 ::= Exp6 "->" Exp7 ;
+
+
+-- ###### OOP1 & OOP2 extension ###### --
+
+-- Types --
+internal    TClass. Type ::= "class" Ident ;
+
+-- Definitions --
+DClass. Def ::= "class" Ident "{" [Member] "}" ;
+DSubclass. Def ::= "class" Ident "extends" Ident "{" [Member] "}" ;
+
+-- Members --
+MField. Member ::= Field ;
+MFun.	Member ::= Type Ident "(" [Arg] ")" "{" [Stm] "}" ;
+separator Member "" ;
+
+-- Expressions --
+internal    ECast.  Exp ::= "<" Exp ":" Type ">" ;
